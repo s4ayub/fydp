@@ -1,0 +1,76 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 7.427369614512472 
+tiers? <exists> 
+size = 2 
+item []: 
+    item [1]:
+        class = "TextTier" 
+        name = "syllables" 
+        xmin = 0 
+        xmax = 7.427369614512472 
+        points: size = 16 
+        points [1]:
+            number = 0.4348641070976513 
+            mark = "1" 
+        points [2]:
+            number = 0.6036684849201976 
+            mark = "2" 
+        points [3]:
+            number = 0.7452508231126894 
+            mark = "3" 
+        points [4]:
+            number = 1.1441912289931937 
+            mark = "4" 
+        points [5]:
+            number = 1.5925662149732231 
+            mark = "5" 
+        points [6]:
+            number = 1.9488131946287415 
+            mark = "6" 
+        points [7]:
+            number = 2.1964384788575173 
+            mark = "7" 
+        points [8]:
+            number = 3.0469400058915483 
+            mark = "8" 
+        points [9]:
+            number = 3.1471501471272756 
+            mark = "9" 
+        points [10]:
+            number = 3.5165088957411563 
+            mark = "10" 
+        points [11]:
+            number = 4.0593621662569 
+            mark = "11" 
+        points [12]:
+            number = 4.3875530499222215 
+            mark = "12" 
+        points [13]:
+            number = 4.518182127504346 
+            mark = "13" 
+        points [14]:
+            number = 4.678020100742115 
+            mark = "14" 
+        points [15]:
+            number = 4.848596753658308 
+            mark = "15" 
+        points [16]:
+            number = 4.958686458251821 
+            mark = "16" 
+    item [2]:
+        class = "IntervalTier" 
+        name = "silences" 
+        xmin = 0 
+        xmax = 7.427369614512472 
+        intervals: size = 2 
+        intervals [1]:
+            xmin = 0 
+            xmax = 5.665684807256236 
+            text = "utterance" 
+        intervals [2]:
+            xmin = 5.665684807256236 
+            xmax = 7.427369614512472 
+            text = "silent" 
