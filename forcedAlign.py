@@ -33,8 +33,8 @@ for audioFile in audioFiles:
     			None, # dummy program name argument
     			unicode(audioPath+audioFile),
     			unicode(transPath+transFile),
-    			u"task_language=eng|is_text_type=mplain|os_task_file_format=aud|os_task_file_levels=3",
-    			unicode(outputPath + audioFile[:-4] + "_fa.aud"),
+    			u"task_language=eng|is_text_type=mplain|os_task_file_format=csv|os_task_file_levels=3",
+    			unicode(outputPath + audioFile[:-4] + "_fa.csv"),
     			u"--presets-word"])
 		count += 1
 		print("[FINISH] Completed Files: " + str(count) + "/" + str(len(audioFiles)))
