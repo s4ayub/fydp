@@ -73,10 +73,19 @@ def lstm_network(x):
     x = keras.layers.Dense(2)(x)
     return x
 
-
+# 5 sequences, size image and channel
 image_tensor = keras.Input(shape=(5, 256, 256, 1))
 residual = residual_network(image_tensor)
 lstm = lstm_network(residual)
   
 model = keras.Model(inputs=[image_tensor], outputs=[lstm])
 print(model.summary())
+
+print("Compliling model...")
+model.compile(optimizer='rmsprop',
+				loss='binary_crossentropy',
+				metrics=['accuracy'])
+
+print("... compliling complete")
+
+#TODO: set learning rate (10^-4, but i think this is default so OK)
