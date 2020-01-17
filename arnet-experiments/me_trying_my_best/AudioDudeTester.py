@@ -3,6 +3,7 @@ import signal
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import matplotlib.cm as cm
 import threading
 import datetime as dt
 import sys
@@ -10,6 +11,7 @@ import time
 import scipy.signal
 import scipy.io.wavfile as wavfile
 import argparse
+import os.path
 from filtersuite import bpf
 
 def print_data(in_data):
@@ -29,7 +31,8 @@ class AudioDudeTester:
         self.ax = self.fig.add_subplot(1, 1, 1)
 
         # Recording
-        self.filepath = None
+        self.input_path = None
+        self.output_path = None
         self.timeout = 10
         self.recorded_data = []
 
@@ -106,16 +109,137 @@ class AudioDudeTester:
             self.ad.play_wav_file(filepath)
             input("Press enter for recording mode")
 
+    def create_spectrogram(self, data, fs, use_logscale=False):
+        f, t, Sxx = [None]*3
+
+        if not use_logscale:
+            nperseg = 512
+            tbins = 1000
+            noverlap = (len(data) - tbins*(nperseg))//(-(tbins - 1))
+            t_res = (len(data)/fs)*((nperseg-noverlap)/(len(data)-noverlap))
+            f_res = fs/(nperseg/2)
+
+            f, t, Sxx = scipy.signal.spectrogram(data, fs, nperseg=nperseg, noverlap=noverlap)
+            
+            #import pdb;pdb.set_trace()
+        else:
+            nperseg = 512
+            tbins = 1000
+            noverlap = (len(data) - tbins*(nperseg))//(-(tbins - 1))
+            t_res = (len(data)/fs)*((nperseg-noverlap)/(len(data)-noverlap))
+            f_res = fs/(nperseg/2)
+            f, t, Sxx = scipy.signal.spectrogram(data, fs, nperseg=nperseg, noverlap=noverlap)
+
+            #import pdb;pdb.set_trace()
+
+            fmin = 20
+            fmax = 20000
+            nf = 1000
+
+            # The following is an excerpt from soundspec: https://github.com/FlorinAndrei/soundspec
+
+            # generate an exponential distribution of frequencies
+            # (as opposed to the linear distribution from FFT)
+            b = fmin - 1
+            a = np.log10(fmax - fmin + 1) / (nf - 1)
+            freqs = np.empty(nf, int)
+            for i in range(nf):
+              freqs[i] = np.power(10, a * i) + b
+            # list of frequencies, exponentially distributed:
+            freqs = np.unique(freqs)
+
+            # delete frequencies lower than fmin
+            fnew = f[f >= fmin]
+            cropsize = f.size - fnew.size
+            f = fnew
+            Sxx = np.delete(Sxx, np.s_[0:cropsize], axis=0)
+
+            # delete frequencies higher than fmax
+            fnew = f[f <= fmax]
+            cropsize = f.size - fnew.size
+            f = fnew
+            Sxx = Sxx[:-cropsize, :]
+
+            findex = []
+            # find FFT frequencies closest to calculated exponential frequency distribution
+            for i in range(freqs.size):
+              f_ind = (np.abs(f - freqs[i])).argmin()
+              findex.append(f_ind)
+
+            # keep only frequencies closest to exponential distribution
+            # this is usually a massive cropping of the initial FFT data
+            fnew = []
+            for i in findex:
+              fnew.append(f[i])
+            f = np.asarray(fnew)
+            Sxxnew = Sxx[findex, :]
+            Sxx = Sxxnew
+
+        return (f, t, Sxx)
+
+    def show_spectrogram(self, filepath, use_logscale=False, use_color=False):
+        fs, data = wavfile.read(filepath)
+        f, t, Sxx = self.create_spectrogram(data, fs, use_logscale)
+
+        if use_logscale:
+            plt.yscale('symlog')
+        if use_color:
+            plt.pcolormesh(t, f, np.log10(Sxx))
+        else:
+            plt.pcolormesh(t, f, np.log10(Sxx), cmap=cm.gray)
+
+        plt.ylabel('f [Hz]')
+        plt.xlabel('t [sec]')
+        plt.show()
+
+    def save_spectrogram_sequence(self, input_file, output_folder, chunk_size_s, window_size_ms, window_step_ms, use_logscale=False, use_color=False):
+        fs, data = wavfile.read(input_file)
+
+        # Segment audio into chunks
+        chunk_size = chunk_size_s * fs
+        chunk_leftover = len(data) % chunk_size
+        chunks = [data[x:x+chunk_size] for x in range(0, len(data), chunk_size)]
+
+        # Formulate sliding window
+        window_size = round(window_size_ms * (fs/1000))
+        window_step = round(window_step_ms * (fs/1000))
+
+        # Create spectrograms using the sliding window
+        n = 0
+        output_file = os.path.join(output_folder, os.path.basename(input_file).split('.')[0]) + "_"
+        for chunk in chunks:
+            window_leftover = chunk_size - ((chunk_size - window_size) % window_step)
+            for x in range(0, len(chunk), window_step):
+                window_data = chunk[x:x+window_size]
+                f, t, Sxx = self.create_spectrogram(window_data, fs, use_logscale=use_logscale)
+                if use_color:
+                    plt.pcolormesh(t, f, np.log10(Sxx))
+                else:
+                    plt.pcolormesh(t, f, np.log10(Sxx), cmap=cm.gray)
+                plt.axis('off')
+                if use_logscale:
+                    plt.yscale('symlog')
+                plt.savefig(output_file + str(n) + ".png")
+                plt.cla()
+                n += 1
+
 def main():
-    mode_choices = ['print','graph','record','play', 'loopback']
+    mode_choices = ['print','graph','record','play', 'loopback', 'spec']
     default_filter_specs = '2000,12000,3'
 
     custom_formatter = lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=100)
     p = argparse.ArgumentParser(formatter_class=custom_formatter)
 
-    p.add_argument('-m', '--mode', type=str, required=True, choices=mode_choices, metavar='print/graph/record/play', help="specify mode: " + str(mode_choices))
+    p.add_argument('-m', '--mode', type=str, required=True, choices=mode_choices, metavar="/".join(mode_choices), help="specify mode: " + str(mode_choices))
     p.add_argument('-f', '--filter', type=str, nargs='?', const=default_filter_specs, metavar='LOW,HIGH,ORDER', help="enable bandpass filtering")
-    p.add_argument('-p', '--path', type=str, help="specify path for recording output / file playback")
+    p.add_argument('-i', '--input', type=str, help="specify input path")
+    p.add_argument('-o', '--output', type=str, help="specify output path")
+    p.add_argument('--use-logscale', action='store_true', help="use logscale for spectrograms")
+    p.add_argument('--use-color', action='store_true', help="use color for spectrograms")
+    p.add_argument('--nn-prep', action='store_true', help="save spectrograms to disk for neural network training")
+    p.add_argument('--chunk-size', type=int, help="nn prep: specify audio chunk size in seconds")
+    p.add_argument('--window-size', type=int, help="nn prep: specify sliding window size in milliseconds")
+    p.add_argument('--window-step', type=int, help="nn prep: specify sliding window step size in milliseconds")
 
     args = p.parse_args()
     tester = AudioDudeTester()
@@ -131,8 +255,10 @@ def main():
         tester.enable_filtering = True
         print("\nEnabled bandpass filtering: {0}hz-{1}hz, filter order {2}".format(tester.lowf, tester.highf, tester.f_order))
 
-    if args.path:
-       tester.filepath = args.path
+    if args.input:
+       tester.input_path = args.input
+    if args.output:
+        tester.output_path = args.output
 
     print("")
 
@@ -141,17 +267,34 @@ def main():
     elif args.mode == 'graph':
         tester.graph_mic_byte_stream()
     elif args.mode == 'record':
-        if not args.path:
-            print("For recording mode, must specify output filepath -- e.g. -m record -p recording.wav")
+        if not tester.output_path:
+            print("For recording mode, must specify output filepath -- e.g. -m record -o recording.wav")
             return
         tester.record_mic_byte_stream()
     elif args.mode == 'play':
-        if not args.path:
-            print("For playback mode, must specify input filepath -- e.g. -m play -p recording.wav")
+        if not tester.input_path:
+            print("For playback mode, must specify input filepath -- e.g. -m play -i recording.wav")
             return
-        tester.play_wav_file(tester.filepath) # Implement bandpass filtering for this mode
+        tester.play_wav_file(tester.input_path) # Implement bandpass filtering for this mode
     elif args.mode == 'loopback':
         tester.loopback()
+    elif args.mode == 'spec':
+        if not tester.input_path:
+            print("For spectrogram mode, must specify input filepath -- e.g. -m spec -i recording.wav")
+            return
+
+        use_logscale = True if args.use_logscale else False
+        use_color = True if args.use_color else False
+
+        if args.nn_prep:
+            if not tester.output_path:
+                print("For spectrogram NN prep mode, must specify the output folder to store the sequential histograms")
+            if not args.chunk_size or not args.window_size or not args.window_step:
+                print("For spectrogram NN prep mode, must specify the chunk size (s), window size (ms), and window step (ms)")
+                return
+            tester.save_spectrogram_sequence(tester.input_path, tester.output_path, chunk_size_s=args.chunk_size, window_size_ms=args.window_size, window_step_ms=args.window_step, use_logscale=use_logscale, use_color=use_color)
+        else:
+            tester.show_spectrogram(tester.input_path, use_logscale=use_logscale, use_color=use_color)
 
 if __name__ == "__main__":
     main()

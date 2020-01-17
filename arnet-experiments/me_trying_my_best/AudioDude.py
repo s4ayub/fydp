@@ -1,6 +1,8 @@
 import pyaudio
 import numpy as np
 import wave
+import scipy.signal
+import scipy.io.wavfile as wavfile
 
 # user_audio_callback must have signature: callback(in_data)
 
