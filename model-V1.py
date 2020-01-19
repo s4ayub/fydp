@@ -1,8 +1,12 @@
 import tensorflow as tf
 from tensorflow import keras
+import numpy as np
 
-# Input spectogram size: 
-# TODO: parse data (?)
+from matplotlib import image
+from matplotlib import pyplot
+
+from os import listdir
+
 
  #RESNET
 #
@@ -47,7 +51,7 @@ def residual_network(x):
     x = add_common_layers(x)
 
     strides = (2, 2)
-    x = residual_block(x, 32, 64)				# why is input channels 32 here?
+    x = residual_block(x, 32, 64)				
 
     x = residual_block(x, 64, 128)
 
@@ -60,7 +64,7 @@ def residual_network(x):
     x = residual_block(x, 32, 16)
 
     x = keras.layers.TimeDistributed(keras.layers.Flatten())(x)		# Flatten so that dense can take in 
-    x = keras.layers.TimeDistributed(keras.layers.Dense(100))(x)	# Output (?) what does it look like, why 100?
+    x = keras.layers.TimeDistributed(keras.layers.Dense(100))(x)	# Randomly put 100 since paper does not specify this 
 
     return x
 
@@ -71,6 +75,7 @@ def lstm_network(x):
     x = keras.layers.Bidirectional(keras.layers.LSTM(512))(x)
     x = keras.layers.Dropout(0.4)(x)
     x = keras.layers.Dense(2)(x)
+    x = keras.layers.Activation('softmax')(x)  	
     return x
 
 # 5 sequences, size image and channel
@@ -89,3 +94,33 @@ model.compile(optimizer='rmsprop',
 print("... compliling complete")
 
 #TODO: set learning rate (10^-4, but i think this is default so OK)
+
+''' -------------- Preprocessing data 
+	1. Load all image from  dir
+	2. Downsize (?)  
+	2. Scale by ./255 [Already done by arnet ]
+	3. Pad the sequence so that  all are same length (Probably dont need to do this)
+	4. 
+	'''
+
+# find a better way to load all the data 
+# TODO: load all the data, rn this is just a sample
+
+training_imgs = list()
+for filename in listdir('/home/harminder/fydp/train_imgs'):
+	img_data = image.imread('/home/harminder/fydp/train_imgs/' + filename)
+	training_imgs.append(img_data)
+
+print(str(len(training_imgs)))	
+
+
+x_train = np.reshape(training_imgs, (len(training_imgs)/5), 5) # recall 5 is random, real: 400 
+y_train = np.full(x_train.size, 0, dtype=np.float)
+
+print("Training model...")
+model.fit(x_train, y_train, 
+			batch_size=1,
+			epochs=30)
+			#validation_data=[x_test, y_test])
+
+			
