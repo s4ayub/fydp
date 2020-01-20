@@ -120,8 +120,6 @@ class AudioDudeTester:
             f_res = fs/(nperseg/2)
 
             f, t, Sxx = scipy.signal.spectrogram(data, fs, nperseg=nperseg, noverlap=noverlap)
-            
-            #import pdb;pdb.set_trace()
         else:
             nperseg = 512
             tbins = 1000
