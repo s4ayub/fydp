@@ -5,17 +5,11 @@ import numpy as np
 from matplotlib import image
 from matplotlib import pyplot
 
-from os import listdir
+import os
 
-
- #RESNET
-#
-# image dimensions
-#
-
-batch = 3
+imgs_per_seq = 4000/10 # 4s clips, 10ms steps
 img_h = 257
-img_w = 5 #replace
+img_w = 257 
 img_c = 1
 
 def residual_network(x):
@@ -69,17 +63,16 @@ def residual_network(x):
     return x
 
 def lstm_network(x):
-	# Might needs to set return_sequences=false, return_state=false 
     x = keras.layers.Bidirectional(keras.layers.LSTM(512, return_sequences=True))(x)
     # (?) Missing: "Dropout rates of 0.2 and 0.4 are utilized after each recurrent layer"
+    # But where would it go? after each bidirectional layer?
     x = keras.layers.Bidirectional(keras.layers.LSTM(512))(x)
     x = keras.layers.Dropout(0.4)(x)
     x = keras.layers.Dense(2)(x)
     x = keras.layers.Activation('softmax')(x)  	
     return x
 
-# 5 sequences, size image and channel
-image_tensor = keras.Input(shape=(5, 256, 256, 1))
+image_tensor = keras.Input(shape=(20,300,300,1))#(imgs_per_seq, img_w, img_h, img_c))
 residual = residual_network(image_tensor)
 lstm = lstm_network(residual)
   
@@ -87,40 +80,64 @@ model = keras.Model(inputs=[image_tensor], outputs=[lstm])
 print(model.summary())
 
 print("Compliling model...")
+#TODO: set learning rate (10^-4, but i think this is default so OK)
 model.compile(optimizer='rmsprop',
 				loss='binary_crossentropy',
 				metrics=['accuracy'])
-
 print("... compliling complete")
 
-#TODO: set learning rate (10^-4, but i think this is default so OK)
-
-''' -------------- Preprocessing data 
-	1. Load all image from  dir
-	2. Downsize (?)  
-	2. Scale by ./255 [Already done by arnet ]
-	3. Pad the sequence so that  all are same length (Probably dont need to do this)
-	4. 
-	'''
-
-# find a better way to load all the data 
-# TODO: load all the data, rn this is just a sample
-
-training_imgs = list()
-for filename in listdir('/home/harminder/fydp/train_imgs'):
-	img_data = image.imread('/home/harminder/fydp/train_imgs/' + filename)
-	training_imgs.append(img_data)
-
-print(str(len(training_imgs)))	
 
 
-x_train = np.reshape(training_imgs, (len(training_imgs)/5), 5) # recall 5 is random, real: 400 
-y_train = np.full(x_train.size, 0, dtype=np.float)
+'''
+PREPROCESSING DATA
+	1. Load imgs from stutter/no stutter dir 
+	2. Scale by ./255 [Possibly done by arnet]
+	3. [Optional] Add option to visualize images 
+	4. Check to make sure each sequence of same length (prob do in step 1)
+	5. Check to make sure final shape is correct
+
+'''
+
+stutter_dir = "/home/harminder/fydp/train_imgs/stutterA/"
+no_stutter_dir = "/home/harminder/fydp/train_imgs/noStutter/"
+
+train_seqs = []
+train_labels = []
+
+for fldr_name in os.listdir(stutter_dir): # assumes everything within dir is a dir 
+	imgs = []
+
+	for file_name in os.listdir(stutter_dir + fldr_name):
+		img_data = image.imread(stutter_dir + fldr_name + '/' + file_name)
+		img_data = np.reshape(img_data,(300,300,1))
+		imgs.append(img_data)	
+		
+	train_seqs.append(np.asarray(imgs))
+
+train_labels = [1 for i in range(len(train_seqs))]
+
+for fldr_name in os.listdir(no_stutter_dir): # assumes everything within dir is a dir 
+	imgs = []
+
+	for file_name in os.listdir(no_stutter_dir + fldr_name):
+		img_data = image.imread(no_stutter_dir + fldr_name + '/' + file_name)
+		img_data = np.reshape(img_data,(300,300,1))
+		imgs.append(img_data)	
+		
+	train_seqs.append(np.asarray(imgs))
+	train_labels.append(0)
+
+print(train_labels)
+print(np.array(train_seqs).shape)	
+
+
+x_train = np.asarray(train_seqs)
+y_train = np.asarray(train_labels, dtype=np.float)
 
 print("Training model...")
 model.fit(x_train, y_train, 
 			batch_size=1,
-			epochs=30)
+			epochs=2) # put back to 30
 			#validation_data=[x_test, y_test])
 
 			
