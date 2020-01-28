@@ -114,7 +114,7 @@ for fldr_name in os.listdir(stutter_dir): # assumes everything within dir is a d
 		
 	train_seqs.append(np.asarray(imgs))
 
-train_labels = [1 for i in range(len(train_seqs))]
+train_labels = [[0,1] for i in range(len(train_seqs))]
 
 for fldr_name in os.listdir(no_stutter_dir): # assumes everything within dir is a dir 
 	imgs = []
@@ -125,7 +125,7 @@ for fldr_name in os.listdir(no_stutter_dir): # assumes everything within dir is 
 		imgs.append(img_data)	
 		
 	train_seqs.append(np.asarray(imgs))
-	train_labels.append(0)
+	train_labels.append([1,0])
 
 print(train_labels)
 print(np.array(train_seqs).shape)	
@@ -139,5 +139,5 @@ model.fit(x_train, y_train,
 			batch_size=1,
 			epochs=2) # put back to 30
 			#validation_data=[x_test, y_test])
-
+print("FINISHED")
 			
