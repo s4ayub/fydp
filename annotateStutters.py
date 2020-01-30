@@ -24,7 +24,7 @@ for csvFile in csvFiles:
   print(csvFile)
 
   for i, row in df.iterrows():
-    if row.word.isupper() and not (row.word == 'I'):
+    if ((row.word.isupper() and not (row.word == 'I')) or (row.word[0:2].lower() == "um") or (row.word[0:2].lower() == "uh") or ("{" in row.word)):
       df.at[i, 'stutter_type'] = "s"
     else:
       df.at[i, 'stutter_type'] = "n"
