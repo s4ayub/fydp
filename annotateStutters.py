@@ -24,8 +24,12 @@ for csvFile in csvFiles:
   print(csvFile)
 
   for i, row in df.iterrows():
-    if ((row.word.isupper() and not (row.word == 'I')) or (row.word[0:2].lower() == "um") or (row.word[0:2].lower() == "uh") or ("{" in row.word)):
+    if (row.word.isupper() and not (row.word == 'I')):
       df.at[i, 'stutter_type'] = "s"
+    elif (row.word[0:2].lower() == "um") or (row.word[0:2].lower() == "uh"):
+      df.at[i, 'stutter_type'] = "i"
+    elif ("{" in row.word):
+      df.at[i, 'stutter_type'] = "p"
     else:
       df.at[i, 'stutter_type'] = "n"
 
