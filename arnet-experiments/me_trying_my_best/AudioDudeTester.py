@@ -240,7 +240,7 @@ class AudioDudeTester:
             n += 1
 
 def main():
-    mode_choices = ['print','graph','record','play', 'loopback', 'spec']
+    mode_choices = ['print','graph','record','play', 'loopback', 'spec', 'nn']
     default_filter_specs = '2000,12000,3'
 
     custom_formatter = lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=100)
@@ -272,9 +272,9 @@ def main():
         print("\nEnabled bandpass filtering: {0}hz-{1}hz, filter order {2}".format(tester.lowf, tester.highf, tester.f_order))
 
     if args.input:
-       tester.input_path = args.input
+       tester.input_path = os.path.expanduser(args.input)
     if args.output:
-        tester.output_path = args.output
+        tester.output_path = os.path.expanduser(args.output)
 
     print("")
 

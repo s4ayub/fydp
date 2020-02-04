@@ -12,4 +12,4 @@ python AudioDudeTester.py -m spec -i filename.wav
 
 ### NN prep
 
-python AudioDudeTester.py -m spec -i recording.wav --nn-prep --chunk-size 4 --window-size 200 --window-step 100 -o test_output_folder
+python AudioDudeTester.py -m spec -i recording.wav --nn-prep --chunk-size 4 --window-size 200 --window-step 100 -o output
