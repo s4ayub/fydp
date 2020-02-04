@@ -11,7 +11,8 @@ import time
 import scipy.signal
 import scipy.io.wavfile as wavfile
 import argparse
-import os.path
+import os
+from PIL import Image
 from filtersuite import bpf
 
 def print_data(in_data):
@@ -27,7 +28,7 @@ class AudioDudeTester:
 
         # Graphing
         self.ys = []
-        self.fig = plt.figure()
+        self.fig = plt.figure(frameon=False)
         self.ax = self.fig.add_subplot(1, 1, 1)
 
         # Recording
@@ -76,7 +77,7 @@ class AudioDudeTester:
 
     def record_mic_byte_stream(self):
         timeout = 10
-        print("Entered recording mode with filepath='{0}' and timeout={1}s".format(self.filepath, timeout))
+        print("Entered recording mode with filepath='{0}' and timeout={1}s".format(self.output_path, timeout))
         self.ad.start_mic_input_stream(num_channels=1, sampling_rate=self.sampling_frequency, num_frames_per_buffer=self.frames_per_buffer, callback=self.record_mic_byte_stream_callback)
         signal.alarm(timeout)
         input("Press enter to stop recording.\n")
@@ -84,10 +85,10 @@ class AudioDudeTester:
         self.ad.stop_mic_input_stream()
         data = np.array(self.recorded_data)
         data = data.astype(np.int16)
-        wavfile.write(self.filepath, self.sampling_frequency, data)
+        wavfile.write(self.output_path, self.sampling_frequency, data)
 
     def play_wav_file(self, filepath):
-        print("Entered playback mode with filepath='{0}'\n".format(self.filepath))
+        print("Entered playback mode with filepath='{0}'\n".format(self.input_path))
         self.ad.play_wav_file(filepath)
 
     def loopback(self):
@@ -191,6 +192,11 @@ class AudioDudeTester:
         plt.show()
 
     def save_spectrogram_sequence(self, input_file, output_folder, chunk_size_s, window_size_ms, window_step_ms, use_logscale=False, use_color=False):
+        input_filename = os.path.basename(input_file).split('.')[0]
+        output_folder = os.path.join(output_folder, input_filename)
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
         fs, data = wavfile.read(input_file)
 
         # Segment audio into chunks
@@ -204,9 +210,13 @@ class AudioDudeTester:
 
         # Create spectrograms using the sliding window
         n = 0
-        output_file = os.path.join(output_folder, os.path.basename(input_file).split('.')[0]) + "_"
         for chunk in chunks:
+            output_subfolder = os.path.join(output_folder, '%s_%d' % (input_filename, n * chunk_size_s))
+            if not os.path.exists(output_subfolder):
+                os.makedirs(output_subfolder)
+
             window_leftover = chunk_size - ((chunk_size - window_size) % window_step)
+            m = 0
             for x in range(0, len(chunk), window_step):
                 window_data = chunk[x:x+window_size]
                 f, t, Sxx = self.create_spectrogram(window_data, fs, use_logscale=use_logscale)
@@ -217,9 +227,17 @@ class AudioDudeTester:
                 plt.axis('off')
                 if use_logscale:
                     plt.yscale('symlog')
-                plt.savefig(output_file + str(n) + ".png")
+
+                output_file = os.path.join(output_subfolder, input_filename)
+                image_path = '%s_%d_%d.png' % (output_file, n * chunk_size_s, m * window_step_ms)
+                plt.savefig(image_path, bbox_inches='tight', pad_inches=0)
                 plt.cla()
-                n += 1
+
+                image = Image.open(image_path).convert('L')
+                image.save(image_path)
+
+                m += 1
+            n += 1
 
 def main():
     mode_choices = ['print','graph','record','play', 'loopback', 'spec']
