@@ -191,53 +191,55 @@ class AudioDudeTester:
         plt.xlabel('t [sec]')
         plt.show()
 
-    def save_spectrogram_sequence(self, input_file, output_folder, chunk_size_s, window_size_ms, window_step_ms, use_logscale=False, use_color=False):
-        input_filename = os.path.basename(input_file).split('.')[0]
-        output_folder = os.path.join(output_folder, input_filename)
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
+    def save_spectrogram_sequence(self, input_folder, output_folder, chunk_size_ms, window_size_ms, window_step_ms, use_logscale=False, use_color=False):
+        for f in os.listdir(input_folder):
+            input_filename = os.path.basename(f).split('.')[0]
+            new_output_folder = os.path.join(output_folder, input_filename)
+            if not os.path.exists(new_output_folder):
+                os.makedirs(new_output_folder)
 
-        fs, data = wavfile.read(input_file)
+            fs, data = wavfile.read(os.path.join(input_folder, f))
 
-        # Segment audio into chunks
-        chunk_size = chunk_size_s * fs
-        chunk_leftover = len(data) % chunk_size
-        chunks = [data[x:x+chunk_size] for x in range(0, len(data), chunk_size)]
+            # Segment audio into chunks
+            chunk_size = round(chunk_size_ms * (fs/1000))
+            chunk_leftover = len(data) % chunk_size
+            chunks = [data[x:x+chunk_size] for x in range(0, len(data), chunk_size)]
 
-        # Formulate sliding window
-        window_size = round(window_size_ms * (fs/1000))
-        window_step = round(window_step_ms * (fs/1000))
+            # Formulate sliding window
+            window_size = round(window_size_ms * (fs/1000))
+            window_step = round(window_step_ms * (fs/1000))
 
-        # Create spectrograms using the sliding window
-        n = 0
-        for chunk in chunks:
-            output_subfolder = os.path.join(output_folder, '%s_%d' % (input_filename, n * chunk_size_s))
-            if not os.path.exists(output_subfolder):
-                os.makedirs(output_subfolder)
+            # Create spectrograms using the sliding window
+            n = 0
+            for chunk in chunks:
+                output_subfolder = os.path.join(new_output_folder, '%s_%d' % (input_filename, n * chunk_size_ms))
+                if not os.path.exists(output_subfolder):
+                    os.makedirs(output_subfolder)
 
-            window_leftover = chunk_size - ((chunk_size - window_size) % window_step)
-            m = 0
-            for x in range(0, len(chunk), window_step):
-                window_data = chunk[x:x+window_size]
-                f, t, Sxx = self.create_spectrogram(window_data, fs, use_logscale=use_logscale)
-                if use_color:
-                    plt.pcolormesh(t, f, np.log10(Sxx))
-                else:
-                    plt.pcolormesh(t, f, np.log10(Sxx), cmap=cm.gray)
-                plt.axis('off')
-                if use_logscale:
-                    plt.yscale('symlog')
+                window_leftover = chunk_size - ((chunk_size - window_size) % window_step)
+                m = 0
+                for x in range(0, len(chunk), window_step):
+                    window_data = chunk[x:x+window_size]
+                    f, t, Sxx = self.create_spectrogram(window_data, fs, use_logscale=use_logscale)
+                    if use_color:
+                        plt.pcolormesh(t, f, np.log10(Sxx))
+                    else:
+                        plt.pcolormesh(t, f, np.log10(Sxx), cmap=cm.gray)
+                    plt.axis('off')
+                    if use_logscale:
+                        plt.yscale('symlog')
 
-                output_file = os.path.join(output_subfolder, input_filename)
-                image_path = '%s_%d_%d.png' % (output_file, n * chunk_size_s, m * window_step_ms)
-                plt.savefig(image_path, bbox_inches='tight', pad_inches=0)
-                plt.cla()
+                    output_file = os.path.join(output_subfolder, input_filename)
+                    image_path = '%s_%d_%d.png' % (output_file, n * chunk_size_ms, m * window_step_ms)
+                    plt.savefig(image_path, bbox_inches='tight', pad_inches=0)
+                    plt.cla()
 
-                image = Image.open(image_path).convert('L')
-                image.save(image_path)
+                    image = Image.open(image_path).convert('L')
+                    image = image.resize((345, 257))
+                    image.save(image_path)
 
-                m += 1
-            n += 1
+                    m += 1
+                n += 1
 
 def main():
     mode_choices = ['print','graph','record','play', 'loopback', 'spec', 'nn']
@@ -303,12 +305,15 @@ def main():
         use_color = True if args.use_color else False
 
         if args.nn_prep:
+            if not os.path.isdir(tester.input_path):
+                print("For spectrogram NN prep mode, the input path must be a directory")
+                return
             if not tester.output_path:
                 print("For spectrogram NN prep mode, must specify the output folder to store the sequential histograms")
             if not args.chunk_size or not args.window_size or not args.window_step:
                 print("For spectrogram NN prep mode, must specify the chunk size (s), window size (ms), and window step (ms)")
                 return
-            tester.save_spectrogram_sequence(tester.input_path, tester.output_path, chunk_size_s=args.chunk_size, window_size_ms=args.window_size, window_step_ms=args.window_step, use_logscale=use_logscale, use_color=use_color)
+            tester.save_spectrogram_sequence(tester.input_path, tester.output_path, chunk_size_ms=args.chunk_size, window_size_ms=args.window_size, window_step_ms=args.window_step, use_logscale=use_logscale, use_color=use_color)
         else:
             tester.show_spectrogram(tester.input_path, use_logscale=use_logscale, use_color=use_color)
 
