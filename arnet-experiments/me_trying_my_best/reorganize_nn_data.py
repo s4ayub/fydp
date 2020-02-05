@@ -27,6 +27,10 @@ def reorg(label_folder, spectrogram_folder, output_folder):
     for per_audio_dir in per_audio_dirs:
         per_audio_dir_path = os.path.join(spectrogram_folder, per_audio_dir)
 
+        if per_audio_dir not in label_file_map:
+            print('Could not find the labelled .csv file for ' + per_audio_dir)
+            continue
+
         raw_data = pd.read_csv(label_file_map[per_audio_dir], usecols=[3, 5], header=0)
         end_times = list(raw_data['end_time'])
         stutter_types = list(raw_data['stutter_type'])
@@ -55,9 +59,11 @@ def reorg(label_folder, spectrogram_folder, output_folder):
                 if end_time_ms > chunk_end_time_ms:
                     break
 
-                stutter_type = stutter_types[csv_index]
-                if stutter_type != 'n' and stutter_type not in stutter_classifications:
-                    stutter_classifications[stutter_type] = True
+                types = stutter_types[csv_index].split(',')
+                types = [t.strip() for t in types]
+                for t in types:
+                    if t and t != 'n' and t not in stutter_classifications:
+                        stutter_classifications[t] = True
 
                 csv_index += 1
             

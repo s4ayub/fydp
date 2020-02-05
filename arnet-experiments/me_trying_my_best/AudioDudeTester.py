@@ -192,7 +192,9 @@ class AudioDudeTester:
         plt.show()
 
     def save_spectrogram_sequence(self, input_folder, output_folder, chunk_size_ms, window_size_ms, window_step_ms, use_logscale=False, use_color=False):
-        for f in os.listdir(input_folder):
+        audio_files = os.listdir(input_folder)
+        audio_files = [f for f in audio_files if f.endswith('.wav')]
+        for f in audio_files:
             input_filename = os.path.basename(f).split('.')[0]
             new_output_folder = os.path.join(output_folder, input_filename)
             if not os.path.exists(new_output_folder):
@@ -220,6 +222,10 @@ class AudioDudeTester:
                 m = 0
                 for x in range(0, len(chunk), window_step):
                     window_data = chunk[x:x+window_size]
+                    
+                    if len(window_data) < window_size:
+                        continue
+
                     f, t, Sxx = self.create_spectrogram(window_data, fs, use_logscale=use_logscale)
                     if use_color:
                         plt.pcolormesh(t, f, np.log10(Sxx))
