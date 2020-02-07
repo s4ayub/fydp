@@ -14,7 +14,7 @@ endTime = 0
 label = ''
 
 for csvFile in csvFiles:
-	writeFile = open(filePath + csvFile,'w')
+	writeFile = open(filePath + os.path.splitext(csvFile)[0] + ".txt",'w')
 	with open(csvFile, 'r') as file:
 		fileData = csv.reader(file)
 		for i, row in enumerate(fileData):
@@ -23,13 +23,26 @@ for csvFile in csvFiles:
 				if i == 1:
 					label = row[5] 
 				if label != row[5]:
-					txt.write (label, startTime, endTime)
+					if (label == " "):
+						label = "E"
+					if (label == "p, w"):
+						label =  "pw"	
+					print("Writing: " + label + " " + str(startTime) + " " + str(endTime))
+					writeFile.write (str(label) + " " + str(startTime) + " " + str(endTime) +  "\n")
 					startTime = row[2]
 					endTime = row[3]
-					label = row[6]
+					label = row[5]
 				else:
 					endTime = row[3]
+	print("Writing: " + label + " " + str(startTime) + " " + str(endTime))
+	if (label == " "):
+		label = "E"
+	if (label == "p, w"):
+		label =  "pw"
+	writeFile.write(str(label) + " " + str(startTime) + " " + str(endTime) + "\n")
 	writeFile.close()
+	startTime = 0
+	endTime = 0
 
 
 # Creating script to tranform the transcripts to appropriate form for other paper 

@@ -7,9 +7,9 @@ from matplotlib import pyplot
 
 import os
 
-imgs_per_seq = 4000/10 # 4s clips, 10ms steps
-img_h = 257
-img_w = 257 
+imgs_per_seq = 39
+img_h = 345
+img_w = 257  
 img_c = 1
 
 def residual_network(x):
@@ -72,7 +72,7 @@ def lstm_network(x):
     x = keras.layers.Activation('softmax')(x)  	
     return x
 
-image_tensor = keras.Input(shape=(20,300,300,1))#(imgs_per_seq, img_w, img_h, img_c))
+image_tensor = keras.Input(shape=(imgs_per_seq, img_w, img_h, img_c))
 residual = residual_network(image_tensor)
 lstm = lstm_network(residual)
   
@@ -109,7 +109,7 @@ for fldr_name in os.listdir(stutter_dir): # assumes everything within dir is a d
 
 	for file_name in os.listdir(stutter_dir + fldr_name):
 		img_data = image.imread(stutter_dir + fldr_name + '/' + file_name)
-		img_data = np.reshape(img_data,(300,300,1))
+		img_data = np.reshape(img_data,(img_w,img_h,img_c))
 		imgs.append(img_data)	
 		
 	train_seqs.append(np.asarray(imgs))
@@ -121,7 +121,7 @@ for fldr_name in os.listdir(no_stutter_dir): # assumes everything within dir is 
 
 	for file_name in os.listdir(no_stutter_dir + fldr_name):
 		img_data = image.imread(no_stutter_dir + fldr_name + '/' + file_name)
-		img_data = np.reshape(img_data,(300,300,1))
+		img_data = np.reshape(img_data,(img_w,img_h,img_c))
 		imgs.append(img_data)	
 		
 	train_seqs.append(np.asarray(imgs))
