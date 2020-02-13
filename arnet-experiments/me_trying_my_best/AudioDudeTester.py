@@ -1,6 +1,7 @@
 import AudioDude
 import signal
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.cm as cm
@@ -121,15 +122,13 @@ class AudioDudeTester:
             f_res = fs/(nperseg/2)
 
             f, t, Sxx = scipy.signal.spectrogram(data, fs, nperseg=nperseg, noverlap=noverlap)
-        else:
+        elif True:
             nperseg = 512
             tbins = 1000
             noverlap = (len(data) - tbins*(nperseg))//(-(tbins - 1))
             t_res = (len(data)/fs)*((nperseg-noverlap)/(len(data)-noverlap))
             f_res = fs/(nperseg/2)
             f, t, Sxx = scipy.signal.spectrogram(data, fs, nperseg=nperseg, noverlap=noverlap)
-
-            #import pdb;pdb.set_trace()
 
             fmin = 20
             fmax = 20000
@@ -157,7 +156,8 @@ class AudioDudeTester:
             fnew = f[f <= fmax]
             cropsize = f.size - fnew.size
             f = fnew
-            Sxx = Sxx[:-cropsize, :]
+            if cropsize:
+                Sxx = Sxx[:-cropsize, :]
 
             findex = []
             # find FFT frequencies closest to calculated exponential frequency distribution
@@ -173,6 +173,15 @@ class AudioDudeTester:
             f = np.asarray(fnew)
             Sxxnew = Sxx[findex, :]
             Sxx = Sxxnew
+        else:
+            # https://www.kaggle.com/himanshurawlani/a-cnn-lstm-model
+            window_size = 20
+            step_size = 10
+            eps = 1e-10
+            nperseg = int(round(window_size * fs / 1e3))
+            noverlap = int(round(step_size * fs / 1e3))
+
+            f, t, Sxx = scipy.signal.spectrogram(data, fs=fs, window='hann', nperseg=nperseg, noverlap=noverlap, detrend=False)
 
         return (f, t, Sxx)
 
@@ -189,12 +198,15 @@ class AudioDudeTester:
 
         plt.ylabel('f [Hz]')
         plt.xlabel('t [sec]')
+
         plt.show()
 
     def save_spectrogram_sequence(self, input_folder, output_folder, chunk_size_ms, window_size_ms, window_step_ms, use_logscale=False, use_color=False):
         audio_files = os.listdir(input_folder)
         audio_files = [f for f in audio_files if f.endswith('.wav')]
+        bad_chunks = {}
         for f in audio_files:
+            print(f)
             input_filename = os.path.basename(f).split('.')[0]
             new_output_folder = os.path.join(output_folder, input_filename)
             if not os.path.exists(new_output_folder):
@@ -214,7 +226,12 @@ class AudioDudeTester:
             # Create spectrograms using the sliding window
             n = 0
             for chunk in chunks:
-                output_subfolder = os.path.join(new_output_folder, '%s_%d' % (input_filename, n * chunk_size_ms))
+                chunk_timestamp = n * chunk_size_ms
+                if chunk is chunks[-1] and len(chunk) < chunk_size and len(chunks) > 1:
+                    chunk = data[-chunk_size:]
+                    chunk_timestamp = round(1000*len(data)/fs) - chunk_size_ms
+
+                output_subfolder = os.path.join(new_output_folder, '%s_%d' % (input_filename, chunk_timestamp))
                 if not os.path.exists(output_subfolder):
                     os.makedirs(output_subfolder)
 
@@ -222,11 +239,19 @@ class AudioDudeTester:
                 m = 0
                 for x in range(0, len(chunk), window_step):
                     window_data = chunk[x:x+window_size]
+                    output_file = os.path.join(output_subfolder, input_filename)
+                    image_path = '%s_%d_%d.png' % (output_file, chunk_timestamp, m * window_step_ms)
                     
                     if len(window_data) < window_size:
-                        continue
+                        break
 
                     f, t, Sxx = self.create_spectrogram(window_data, fs, use_logscale=use_logscale)
+
+                    if not f.any() or not t.any() or not Sxx.any():
+                        if output_subfolder not in bad_chunks:
+                            print('Bad chunk: %s' % output_subfolder)
+                            bad_chunks[output_subfolder] = True
+
                     if use_color:
                         plt.pcolormesh(t, f, np.log10(Sxx))
                     else:
@@ -235,17 +260,22 @@ class AudioDudeTester:
                     if use_logscale:
                         plt.yscale('symlog')
 
-                    output_file = os.path.join(output_subfolder, input_filename)
-                    image_path = '%s_%d_%d.png' % (output_file, n * chunk_size_ms, m * window_step_ms)
-                    plt.savefig(image_path, bbox_inches='tight', pad_inches=0)
+                    plt.tight_layout(0)
+                    plt.gcf().set_dpi(100)
+                    plt.gcf().set_figwidth(3.45)
+                    plt.gcf().set_figheight(2.57)
+                    plt.savefig(image_path, bbox_inches='tight', pad_inches=0, dpi=100)
                     plt.cla()
 
                     image = Image.open(image_path).convert('L')
-                    image = image.resize((345, 257))
                     image.save(image_path)
 
                     m += 1
                 n += 1
+
+        bad_chunks_path = os.path.join(output_folder, 'bad_chunks.txt')
+        with open(bad_chunks_path, 'w') as bcf:
+            bcf.write('\n'.join(bad_chunks.keys()))
 
 def main():
     mode_choices = ['print','graph','record','play', 'loopback', 'spec', 'nn']
@@ -319,6 +349,7 @@ def main():
             if not args.chunk_size or not args.window_size or not args.window_step:
                 print("For spectrogram NN prep mode, must specify the chunk size (s), window size (ms), and window step (ms)")
                 return
+
             tester.save_spectrogram_sequence(tester.input_path, tester.output_path, chunk_size_ms=args.chunk_size, window_size_ms=args.window_size, window_step_ms=args.window_step, use_logscale=use_logscale, use_color=use_color)
         else:
             tester.show_spectrogram(tester.input_path, use_logscale=use_logscale, use_color=use_color)
