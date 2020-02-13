@@ -35,8 +35,10 @@ public:
   void set_acquired(bool acquired);
 
   uint8_t* get_data();
+
   int get_data_length();
 
+  uint8_t get_command_code();
 
 
 private:
@@ -44,6 +46,7 @@ private:
   uint8_t start_bytes[3];
   listen_state_t listen_state;
   uint8_t inc_start_bytes[3];
+  uint8_t inc_command_code;
   uint8_t inc_length_bytes[2];
   int inc_data_length;
   uint8_t inc_data[MAX_DATA_LENGTH];
