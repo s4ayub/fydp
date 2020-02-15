@@ -115,18 +115,18 @@ def process_path(file_path):
 list_ds = tf.data.Dataset.list_files(data_dir)
 labeled_ds = list_ds.map(process_path, AUTOTUNE)
 
-model.compile(optimizer='rmsprop',
+model.compile(optimizer=keras.optimizers.RMSprop(learning_rate=0.0001),#'rmsprop',
               loss='binary_crossentropy',
               metrics=['accuracy'])
 
-model.load_weights("/home/justin/github/fydp/model_weights/model_4s_log_newlr_val.h5")
+model.load_weights("/home/justin/github/fydp/model_weights/model_4s_log_newlr.h5")
 
 acc1 = 0
 sum1 = 0
 acc2 = 0
 sum2 = 0
 
-for img, label in labeled_ds.take(1247):
+for img, label in labeled_ds.take(585):
     output = model.predict(img)
     ind = np.argmax(output)
     if label.numpy()[0]:
