@@ -93,7 +93,8 @@ def reorg(label_folder, spectrogram_folder, output_folder, bad_chunks_path=''):
             else:
                 for key in stutter_classifications:
                     if key in classifiers:
-                        shutil.copytree(per_chunk_dir_path, os.path.join(classifiers[key], '%s_%dof%d' % (per_chunk_dir, stutter_classifications[key], total_labels)))
+                        #shutil.copytree(per_chunk_dir_path, os.path.join(classifiers[key], '%s_%dof%d' % (per_chunk_dir, stutter_classifications[key], total_labels)))
+                        shutil.copytree(per_chunk_dir_path, os.path.join(classifiers[key], per_chunk_dir))
                     else:
                         print('Yikes')
                         import pdb; pdb.set_trace()
