@@ -35,6 +35,9 @@ def find_word_repetitions(path_transcript):
 			num_rep=0	
 			word_prev = str(tokens[0])
 			start_prev = str(tokens[1])
+	
+	if (num_rep != 0):
+		wr[len(wr)-1][2] = num_rep
 
 	return wr	
 
@@ -45,12 +48,15 @@ def find_phrase_repetitions(path_transcript):
 	phrase_words = []
 	reps_found = 0
 	check_next = False
+	start_t = 0 
 
 	phr = []
 	phr.append(["", "", ""])
 
 	phrase_words.append(str(lines[0].split()[0]))
 	phrase_words.append(str(lines[1].split()[0]))
+	start_ph1 = str(lines[0].split()[1])
+	start_ph2 = str(lines[1].split()[1])
 
 	for i in range(2, len(lines)-1):
 		tokens = lines[i].split()
@@ -58,12 +64,14 @@ def find_phrase_repetitions(path_transcript):
 		if check_next:
 			if(phrase_words[1] == str(tokens[0])):
 				if(reps_found == 0):
-					phr.append([phrase_words[0]+" "+phrase_words[1], 10, ""]) # FIGURE OUT THE REST 
+					phr.append([phrase_words[0]+" "+phrase_words[1], start_ph1, ""]) # FIGURE OUT THE REST 
 				reps_found += 1 
 			else:
 				tmp = phrase_words[0]
 				phrase_words[0] = phrase_words[1]
 				phrase_words[1] =tmp
+				start_ph1 = start_ph2
+				start_ph2 = str(tokens[1])
 				if(reps_found != 0):
 					phr[len(phr)-1][2] = reps_found
 				reps_found = 0	
@@ -72,11 +80,15 @@ def find_phrase_repetitions(path_transcript):
 			if(phrase_words[0] != str(tokens[0])):
 				phrase_words[0]=phrase_words[1]
 				phrase_words[1]=str(tokens[0])
+				start_ph1 = start_ph2
+				start_ph2 = str(tokens[1])  
 				if(reps_found != 0):
 					phr[len(phr)-1][2] = reps_found
 				reps_found = 0
 			else:
-				check_next = True	
+				check_next = True
+	
+
 
 	return phr			
 
