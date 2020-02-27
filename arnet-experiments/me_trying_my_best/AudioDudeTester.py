@@ -273,7 +273,7 @@ class AudioDudeTester:
                     m += 1
                 n += 1
 
-        bad_chunks_path = os.path.join(output_folder, 'bad_chunks.txt')
+        bad_chunks_path = os.path.join('/'.join(output_folder.split('/')[:-1]), 'bad_chunks.txt')
         with open(bad_chunks_path, 'w') as bcf:
             bcf.write('\n'.join(bad_chunks.keys()))
 

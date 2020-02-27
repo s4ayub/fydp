@@ -32,13 +32,16 @@ class MicIO:
         self.pyaudio_stream.stop_stream()
         self.pyaudio_stream.close()
 
+    def save(self, output_wav, data):
+        wavfile.write(output_wav, MicIO.SamplingFrequency, data)
+
     def play(self, wavfile, device_index=None):
         wf = wave.open(wavfile, 'rb')
-        stream = self.pyaudio_stream.open(format=self.audio.get_format_from_width(wf.getsampwidth()), 
-                                          channels=wf.getnchannels(), 
-                                          rate=wf.getframerate(), 
-                                          output=True, 
-                                          output_device_index=device_index)
+        stream = self.pyaudio_io.open(format=self.pyaudio_io.get_format_from_width(wf.getsampwidth()), 
+                                      channels=wf.getnchannels(), 
+                                      rate=wf.getframerate(), 
+                                      output=True, 
+                                      output_device_index=device_index)
 
         data = wf.readframes(MicIO.FramesPerBuffer)
         while len(data):

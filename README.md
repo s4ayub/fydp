@@ -14,4 +14,4 @@ python arnet-experiments/me_trying_my_best/reorganize_nn_data.py -l labelled_csv
 
 ### Resize raw spectrograms
 
-python arnet-experiments/me_trying_my_best/resize_raw_spectrograms.py -i raw_spectrograms -o resized_raw_spectrograms -s 172,128
+python arnet-experiments/me_trying_my_best/resize_raw_spectrograms.py -i raw_spectrograms -o raw_spectrograms_172x128 -s 172,128
