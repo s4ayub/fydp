@@ -1,5 +1,9 @@
-// Eye Servo 1 - 425 - 575
-// Lid Servo 2 - 250 - 400
+// Lid L Servo 1 
+// Lid R Servo 2 - 250 - 400
+// Eye Servo 3 - 425 - 575
+// Eyes Up Down Servo 4 - Dead
+// Neck Pitch Servo 5 - 
+// Neck Yaw Servo 6 - 
 
 #include "uart_driver.h"
 #include <BioloidController.h>
@@ -11,8 +15,8 @@
 #define COMMAND_MOTORS_HOME   0x01
 #define COMMAND_MOTORS_HAPPY  0x02
 
-#define PIN_LEFT_ARM          3
-#define PIN_RIGHT_ARM         4
+#define PIN_LEFT_ARM          12
+#define PIN_RIGHT_ARM         14
 
 #define SERVO_LEFT_CENTER     90
 #define SERVO_RIGHT_CENTER    90
@@ -71,8 +75,6 @@ void pose_step(uint16_t* pose, int time_ms){
       delay(1);
   }
 }
-
-void 
 
 void MoveHome() {
 
