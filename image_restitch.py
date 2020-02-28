@@ -1,18 +1,25 @@
 import os
 import numpy as np
 from PIL import Image
+import argparse
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--inputPath", "-i", help="input/path/", required=True)
+parser.add_argument("--outputPath", "-o", help="output/path/", required=True)
+
+args = parser.parse_args()
 
 # Things i need to change:
 # how to start vm: source ~/ven/bin/activate
 # Input and output directory, must create output directory
-# num_omages, 2sec 19, 4sec 39
 
-input_dir = "/home/justin/Downloads/4s_200ms_100ms_172x128/nn_spectrograms/no_stutter/"
-output_dir = "/home/justin/github/fydp/data/no_stutter/"
+#input_dir = "/home/justin/Downloads/4s_200ms_100ms_172x128/nn_spectrograms/no_stutter/"
+#output_dir = "/home/justin/github/fydp/data/no_stutter/"
+
+input_dir = args.inputPath
+output_dir = args.outputPath
 num_images = 39
-
-train_seqs = []
-train_labels = []
 
 for fldr_name in os.listdir(input_dir):
     imgs = []
@@ -22,7 +29,6 @@ for fldr_name in os.listdir(input_dir):
 
     for file_name in os.listdir(input_dir + fldr_name):
         img_data = Image.open(input_dir + fldr_name + '/' + file_name)
-        #img_data = img_data.resize((172,128), Image.BILINEAR)
         imgs.append(np.array(img_data))
 
     arr = np.array(imgs)
