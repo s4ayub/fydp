@@ -9,7 +9,7 @@ import sys
 AudioTimeout = 0.5
 
 SyncMessageSize = sys.getsizeof(int())
-SyncTimeout = 2
+SyncTimeout = 30
 
 class MicTransmitter:
     def __init__(self):
@@ -46,17 +46,22 @@ class MicTransmitter:
 
     def sync_wait(self):
         msg = 0
-        try:
-            msg = self.sync_clientsocket.recv(SyncMessageSize)
-            msg = int.from_bytes(msg, 'little')
-        except socket.timeout:
-            print('MicReceiever: Sync error timeout')
+        r, _, _ = select.select([self.clientsocket], [], [], SyncTimeout)
+
+        if r:
+            try:
+                msg = self.clientsocket.recv(SyncMessageSize)
+                msg = int.from_bytes(msg, 'little')
+            except:
+                pass
+        else:
+            print('MicTransmitter: Sync error timeout')
 
         return msg
 
     def sync_post(self, msg=0):
         msg = bytes([int(msg)])
-        self.sync_socket.sendall(msg)
+        self.clientsocket.sendall(msg)
 
 class MicReceiver:
     def __init__(self, callback):
