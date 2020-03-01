@@ -3,6 +3,10 @@ import uart_driver
 import time
 import struct
 
+COMMAND_MOVE_HOME = b'\x01'
+COMMAND_MOVE_HAPPY = b'\x02'
+COMMAND_MOVE_EXCITED = b'\x03'
+COMMAND_MOVE_IDLE = b'\x04'
 
 def main():
     '''
@@ -10,34 +14,27 @@ def main():
     '''
 
     uart = uart_driver.UARTDriver('COM3', 57600)
-    motor1 = struct.pack('H', 500)
-    motor2 = struct.pack('H', 300)
-    data = motor1 + motor2
-    
-    time.sleep(7)
-    print("Transmitting Data")
-    val = 0.2
-    # uart.transmit(b'\x01', data)
-    # time.sleep(val)
-    uart.transmit(b'\x02', data)
-    # time.sleep(val)
-    # uart.transmit(b'\x01', data)
-    # time.sleep(val)
-    uart.transmit(b'\x02', data)
-    # time.sleep(val)
-    # uart.transmit(b'\x01', data)
-    # time.sleep(val)
-    # uart.transmit(b'\x02', data)
-    # line = []
-    # time.sleep(1)
-    # while(uart.ser.inWaiting()):
-    #     char = uart.ser.readline()
-    #     print(char, end=' ')
 
     time.sleep(10)
-    uart.shutdown()
 
+    try:
+        while (1):
+            value = input("Please enter command:\n")
+            if (value == str(1)):
+                print("MOVE HOME")
+                uart.transmit(COMMAND_MOVE_HOME, [])
+            elif (value == str(2)):
+                print("MOVE_HAPPY")
+                uart.transmit(COMMAND_MOVE_HAPPY, [])
+            elif (value == str(3)):
+                print("MOVE_EXCITED")
+                uart.transmit(COMMAND_MOVE_EXCITED, [])
+            elif (value == str(4)):
+                print("MOVE_IDLE")
+                uart.transmit(COMMAND_MOVE_IDLE, [])
 
+    except KeyboardInterrupt:
+        uart.shutdown()
 
 if __name__ == "__main__":
     main()
