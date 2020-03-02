@@ -1,0 +1,4 @@
+word start_time num_reps 
+time 9 2
+and 96 3
+got 111 3

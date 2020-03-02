@@ -1,0 +1,4 @@
+word start_time num_reps 
+between 4 1
+and 7 1
+England 29 1

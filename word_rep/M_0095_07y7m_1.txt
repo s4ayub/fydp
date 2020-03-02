@@ -1,0 +1,4 @@
+word start_time num_reps 
+then 25 1
+the 88 1
+but 97 1

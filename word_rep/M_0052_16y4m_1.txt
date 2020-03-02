@@ -1,0 +1,4 @@
+word start_time num_reps 
+so 28 1
+queen 52 1
+by 57 1

@@ -1,0 +1,3 @@
+word start_time num_reps 
+and and 96 1
+got got 111 1

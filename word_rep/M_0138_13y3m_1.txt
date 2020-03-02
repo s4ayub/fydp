@@ -1,0 +1,2 @@
+word start_time num_reps 
+Saturday 5 1

@@ -1,0 +1,5 @@
+word start_time num_reps 
+last week 0 1
+and then 10 1
+and then 38 1
+and then 92 1

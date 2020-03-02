@@ -1,0 +1,8 @@
+word start_time num_reps 
+this 4 1
+and 14 1
+foot 19 1
+and 38 1
+and 79 1
+left 84 2
+fat 118 1

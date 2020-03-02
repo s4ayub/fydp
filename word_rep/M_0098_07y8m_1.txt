@@ -1,0 +1,3 @@
+word start_time num_reps 
+then 27 1
+then 69 1

@@ -1,0 +1,7 @@
+word start_time num_reps 
+stop 50 1
+and 51 1
+with 90 1
+I 92 1
+got 93 1
+and 129 1

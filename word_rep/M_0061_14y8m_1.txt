@@ -1,0 +1,6 @@
+word start_time num_reps 
+new 22 2
+new 56 1
+handsome 86 2
+this 104 1
+the 113 2
