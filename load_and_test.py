@@ -36,9 +36,10 @@ def process_path(file_path):
     return img, label
 
 list_ds = tf.data.Dataset.list_files(data_dir)
-labeled_ds = list_ds.map(process_path, AUTOTUNE)
+#labeled_ds = list_ds.map(process_path, AUTOTUNE)
 
 #tf.keras.models.save_model(model, "/home/justin/github/fydp/", save_format='tf')
+# model.save('/home/justin/github/fydp/', save_format='tf')
 loaded_model = tf.keras.models.load_model("/home/justin/github/fydp/", compile=True)
 
 acc1 = 0
@@ -46,10 +47,32 @@ sum1 = 0
 acc2 = 0
 sum2 = 0
 
-print("Model Saved")
+results_ns = []
+results_s = []
 
-for img, label in labeled_ds.take(585):
+print("Model Loaded")
+
+for file_path in list_ds.take(585):
+    img, label = process_path(file_path)
     output = loaded_model.predict(img)
+    #print (output)
+    ind = np.argmax(output)
+    if label.numpy()[0]:
+        sum1 += 1
+        if ind == 0:
+            acc1 += 1
+        elif ind == 1:
+                if(output[0][ind] <= 0.98):
+                        acc1 += 1
+    else:
+        sum2 += 1
+        if ind == 1:
+                if (output[0][ind] > 0.98):
+                        acc2 += 1
+
+
+'''for img, label in labeled_ds.take(585):
+    output = model.predict(img)
     ind = np.argmax(output)
     if label.numpy()[0]:
         sum1 += 1
@@ -58,6 +81,9 @@ for img, label in labeled_ds.take(585):
     else:
         sum2 += 1
         if ind == 1:
-            acc2 += 1
+            acc2 += 1'''                        
+
 print(acc1, sum1, acc1/sum1)
 print(acc2, sum2, acc2/sum2)
+#print(results_ns)
+#print(results_s)
